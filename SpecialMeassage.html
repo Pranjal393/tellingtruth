@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>A Special Message</title>
+  <style>
+    :root{--bg1:#0f172a;--bg2:#0b1220;--accent:#ff5c7c;--accent2:#ffb86b}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{background:radial-gradient(circle at 10% 10%, rgba(255,92,124,0.08), transparent 10%), linear-gradient(180deg,var(--bg1),var(--bg2));color:#eef2ff;display:flex;align-items:center;justify-content:center}
+    .card{width:92%;max-width:860px;padding:28px;border-radius:18px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));box-shadow:0 10px 30px rgba(2,6,23,0.7);backdrop-filter:blur(6px)}
+    .row{display:flex;gap:20px;align-items:center}
+    .left{flex:1}
+    .right{width:320px;text-align:center}
+    h1{margin:0 0 8px;font-size:28px;letter-spacing:0.2px}
+    p.lead{margin:0 0 18px;color:rgba(238,242,255,0.8)}
+    .typebox{font-family:monospace;background:rgba(0,0,0,0.2);padding:14px;border-radius:10px;min-height:130px;display:flex;align-items:center}
+    .typed{font-size:18px;line-height:1.5;white-space:pre-wrap}
+    .btn{display:inline-block;padding:10px 16px;border-radius:12px;border:0;font-weight:600;cursor:pointer}
+    .btn-reveal{background:linear-gradient(90deg,var(--accent),var(--accent2));color:white;box-shadow:0 6px 18px rgba(255,92,124,0.18)}
+    .btn-secondary{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#e6eef8}
+    .actions{margin-top:18px}
+    .small{font-size:13px;color:rgba(255,255,255,0.6)}
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,0.65);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .24s}
+    .modal.open{opacity:1;pointer-events:auto}
+    .dialog{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));padding:24px;border-radius:14px;max-width:520px;width:92%;text-align:center}
+    .response{font-weight:700;font-size:20px;margin:16px 0}
+    .note{margin-top:12px;color:rgba(255,255,255,0.55);font-size:13px}
+    canvas#confetti { position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:999 }
+    @media (max-width:720px){.row{flex-direction:column-reverse}.right{width:100%}}
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+
+  <div class="card" role="main">
+    <div class="row">
+      <div class="left">
+        <h1>Hey <span id="crushName">Astha</span> 👋</h1>
+        <p class="lead">I built this little page just for you. Click reveal when you're ready.</p>
+
+        <div class="typebox">
+          <div class="typed" id="typed">(Your message will appear here.)</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-reveal" id="revealBtn">Reveal</button>
+          <button class="btn btn-secondary" id="previewBtn">Preview message (auto)</button>
+        </div>
+
+        <p class="note">Tip: edit the message text below the script tag to personalize every line. Keep it honest and simple 😊</p>
+      </div>
+
+      <div class="right">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop stop-color='%23ff6b88' offset='0'/%3E%3Cstop stop-color='%23ffd47a' offset='1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect rx='20' width='220' height='220' fill='url(%23g)'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Arial' font-size='22' fill='white'%3EFor you%3C/text%3E%3C/svg%3E" alt="poster" style="border-radius:12px;max-width:100%">
+
+        <div style="margin-top:14px">
+          <button class="btn btn-secondary" id="yesBtn">Say Yes</button>
+          <button class="btn btn-secondary" id="noBtn">Say No</button>
+        </div>
+
+        <p class="small" style="margin-top:12px">If they open this on phone, ask them to rotate for best view.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="dialog">
+      <div id="modalIcon">✨</div>
+      <div class="response" id="responseText">—</div>
+      <div class="small" id="responseSub">We'll keep this private — just for you two.</div>
+      <div style="margin-top:16px">
+        <button class="btn btn-reveal" id="closeModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CRUSH_NAME = 'Astha';
+    const LINES = [
+      "Hey Astha, it's me Pranjal...",
+      "I wasn't sure how to say this in personal...",
+      "But every time you smile, my day gets better.",
+      "So here's me being brave: I like you, Astha.",
+      "Astha, whenever I see you, it feels like the world pauses for a second — except my heart, which races faster than ever just for you",
+      "If you feel something the same, I'd be the happiest. If not, I still hope we stay okay and become Good Friends."
+    ];
+
+    // Your Google Form link
+    const GOOGLE_FORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSeys6z2hCRaOPxjj9EoSAfITmAsOnaHMJcRplGkIHhFpIh4sg/viewform?usp=header";
+
+    const typedEl = document.getElementById('typed');
+    const crushEl = document.getElementById('crushName');
+    const revealBtn = document.getElementById('revealBtn');
+    const previewBtn = document.getElementById('previewBtn');
+
+    crushEl.textContent = CRUSH_NAME;
+
+    function typeLines(lines, el, speed=28){
+      return new Promise(resolve => {
+        el.textContent = '';
+        let i=0; let lineIndex=0; let charIndex=0;
+        function step(){
+          if(lineIndex >= lines.length){ resolve(); return; }
+          const line = lines[lineIndex];
+          if(charIndex < line.length){
+            el.textContent += line[charIndex++];
+            setTimeout(step, speed);
+          } else {
+            el.textContent += '\n\n';
+            lineIndex++; charIndex=0;
+            setTimeout(step, speed*6);
+          }
+        }
+        step();
+      });
+    }
+
+    (function(){
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      let W = canvas.width = innerWidth;
+      let H = canvas.height = innerHeight;
+      window.addEventListener('resize', ()=>{W=canvas.width=innerWidth;H=canvas.height=innerHeight});
+      function Particle(){this.x=Math.random()*W;this.y=-10-Math.random()*H*0.1;this.size=6+Math.random()*8;this.speed=1+Math.random()*4;this.angle=Math.random()*Math.PI*2;this.spin=(Math.random()-0.5)*0.1;this.color=['#ff5c7c','#ffb86b','#ffd47a','#9be7ff'][Math.floor(Math.random()*4)];}
+      Particle.prototype.update=function(){this.y+=this.speed;this.angle+=this.spin;this.x+=Math.sin(this.angle)*1.5;if(this.y>H+20)this.y=-10;}
+      Particle.prototype.draw=function(){ctx.save();ctx.translate(this.x,this.y);ctx.rotate(this.angle);ctx.fillStyle=this.color;ctx.fillRect(-this.size/2,-this.size/2,this.size,this.size);ctx.restore();}
+      let particles=[];
+      function spawn(n){for(let i=0;i<n;i++)particles.push(new Particle());}
+      function loop(){ctx.clearRect(0,0,W,H);particles.forEach(p=>{p.update();p.draw()});particles=particles.filter((p,i)=>i<900);requestAnimationFrame(loop);}
+      loop();
+      window.launchConfetti=(amount=80)=>{spawn(amount);}
+    })();
+
+    async function reveal(){
+        
+      revealBtn.disabled = true; previewBtn.disabled = true;
+      await typeLines(LINES, typedEl);
+      setTimeout(()=>{window.launchConfetti(110); openModal('This is me, honestly. \\nDo you feel the same?');},700);
+    }
+
+    function openModal(text){document.getElementById('modal').classList.add('open');document.getElementById('responseText').textContent=text;}
+    function closeModal(){document.getElementById('modal').classList.remove('open');}
+
+    revealBtn.addEventListener('click', reveal);
+    previewBtn.addEventListener('click', ()=>{typeLines(LINES, typedEl);});
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+
+    // Open Google Form when Yes/No clicked
+    document.getElementById('yesBtn').addEventListener('click', ()=>{ window.open(GOOGLE_FORM_LINK,"_blank"); });
+    document.getElementById('noBtn').addEventListener('click', ()=>{ window.open(GOOGLE_FORM_LINK,"_blank"); });
+
+    document.addEventListener('keydown',(e)=>{if(e.key==='Enter'){if(!revealBtn.disabled)reveal();}});
+  </script>
+</body>
+</html>
